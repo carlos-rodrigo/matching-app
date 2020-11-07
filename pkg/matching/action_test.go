@@ -5,64 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
-
-var ErrCantGetParticipantsNow = errors.New("Can't get participants now")
-
-type Project struct{}
-
-type Participant struct {
-	Name string
-}
-
-type MatchingParticipant struct {
-	Name     string
-	Distance float32
-	Score    float32
-}
-
-type MatchingParticipantsAction interface {
-	GetMatchingParticipantsForProject(p Project) ([]MatchingParticipant, error)
-}
-
-type action struct {
-	Participants ParticipantRepository
-}
-
-func (a *action) GetMatchingParticipantsForProject(p Project) ([]MatchingParticipant, error) {
-	participants, err := a.Participants.GetParticipants()
-	if err != nil {
-		return []MatchingParticipant{}, ErrCantGetParticipantsNow
-	}
-	matchingParticipants := make([]MatchingParticipant, len(participants))
-	for i, v := range participants {
-		matchingParticipants[i] = MatchingParticipant{
-			Name: v.Name,
-		}
-	}
-
-	return matchingParticipants, nil
-}
-
-func NewMatchingParticipantsAction(repository ParticipantRepository) MatchingParticipantsAction {
-	return &action{
-		Participants: repository,
-	}
-}
-
-type ParticipantRepository interface {
-	GetParticipants() ([]Participant, error)
-}
-
-type mockParticipantRepostory struct {
-	mock.Mock
-}
-
-func (m *mockParticipantRepostory) GetParticipants() ([]Participant, error) {
-	args := m.Called()
-	return args.Get(0).([]Participant), args.Error(1)
-}
 
 func TestMatchingProjectWithParticipants(t *testing.T) {
 	t.Run("Given a Project, When we don't found participants, Then should return an empty list of participants", func(t *testing.T) {
