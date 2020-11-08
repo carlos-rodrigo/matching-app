@@ -6,6 +6,8 @@ import (
 	"sync"
 )
 
+var maxDistance = 100.00
+
 //ErrCantGetParticipantsNow is retrived when repository returns an error
 var ErrCantGetParticipantsNow = errors.New("Can't get participants now")
 
@@ -23,6 +25,7 @@ type Action interface {
 
 type action struct {
 	Participants ParticipantRepository
+	Distance     DistanceService
 }
 
 func (a *action) GetMatchingParticipantsForProject(p Project) ([]MatchingParticipant, error) {
@@ -66,13 +69,16 @@ func (a *action) getParticipantsPerCity(errors chan error, participants chan Par
 		return
 	}
 	for _, p := range cityParticipants {
-		participants <- p
+		if a.Distance.GetDistanceBetweenLocations(p.Location, city.Location) <= maxDistance {
+			participants <- p
+		}
 	}
 	return
 }
 
-func NewMatchingParticipantsAction(repository ParticipantRepository) Action {
+func NewMatchingParticipantsAction(repository ParticipantRepository, distance DistanceService) Action {
 	return &action{
 		Participants: repository,
+		Distance:     distance,
 	}
 }

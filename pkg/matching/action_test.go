@@ -18,6 +18,7 @@ func (m *mockParticipantRepostory) GetByFormattedAddress(address string) ([]Part
 }
 
 func TestMatchingProjectWithParticipants(t *testing.T) {
+	distanceService := NewDistanceService()
 	city := "New York, NY, USA"
 	project := Project{
 		Cities: []City{
@@ -38,7 +39,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	t.Run("Given a Project, When we don't found participants, Then should return an empty list of participants", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
 		repository.On("GetByFormattedAddress", city).Return([]Participant{}, nil)
-		action := NewMatchingParticipantsAction(repository)
+		action := NewMatchingParticipantsAction(repository, distanceService)
 
 		participants, _ := action.GetMatchingParticipantsForProject(project)
 
@@ -54,7 +55,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 				Name: "Jillian",
 			},
 		}, nil)
-		action := NewMatchingParticipantsAction(repository)
+		action := NewMatchingParticipantsAction(repository, distanceService)
 
 		participants, _ := action.GetMatchingParticipantsForProject(project)
 
@@ -70,7 +71,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	t.Run("Given a Project, When can't access to participants, then should return an user friendly error", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
 		repository.On("GetByFormattedAddress", city).Return([]Participant{}, errors.New("Can't access to storage now"))
-		action := NewMatchingParticipantsAction(repository)
+		action := NewMatchingParticipantsAction(repository, distanceService)
 
 		_, err := action.GetMatchingParticipantsForProject(project)
 
@@ -110,9 +111,63 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 			Participant{
 				Name:             "Jefferson",
 				FormattedAddress: "New York, NY, USA",
+			},
+			Participant{
+				Name:             "Jillian",
+				FormattedAddress: "New York, NY, USA",
+			},
+		}, nil)
+		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return([]Participant{
+			Participant{
+				Name:             "Matthew",
+				FormattedAddress: "Philadelphia, PA, USA",
+			},
+		}, nil)
+		action := NewMatchingParticipantsAction(repository, distanceService)
+
+		participants, err := action.GetMatchingParticipantsForProject(project)
+
+		assert.Nil(t, err)
+		assert.Equal(t, 3, len(participants))
+		repository.AssertExpectations(t)
+
+	})
+
+	t.Run("Given a project with specified cities, when match participants for project, then must filter those farther than 100km", func(t *testing.T) {
+		project := Project{
+			Cities: []City{
+				City{
+					ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
+					City:             "New York",
+					State:            "NY",
+					Country:          "US",
+					FormattedAddress: "New York, NY, USA",
+					Location: Location{
+						Latitude:  40.7127753,
+						Longitude: -74.0059728,
+					},
+				},
+				City{
+					ID:               "ChIJ60u11Ni3xokRwVg-jNgU9Yk",
+					City:             "Philadelphia",
+					State:            "PA",
+					Country:          "US",
+					FormattedAddress: "Philadelphia, PA, USA",
+					Location: Location{
+						Latitude:  39.9525839,
+						Longitude: -75.1652215,
+					},
+				},
+			},
+		}
+		repository := new(mockParticipantRepostory)
+		repository.On("GetByFormattedAddress", "New York, NY, USA").Return([]Participant{
+			Participant{
+				Name:             "Jefferson",
+				FormattedAddress: "New York, NY, USA",
 				Location: Location{
-					Latitude:  40.7127753,
-					Longitude: -74.0059728,
+					Latitude:  40.247201,
+					Longitude: -74.796316,
 				},
 			},
 			Participant{
@@ -129,18 +184,17 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 				Name:             "Matthew",
 				FormattedAddress: "Philadelphia, PA, USA",
 				Location: Location{
-					Latitude:  40.7127753,
-					Longitude: -74.0059728,
+					Latitude:  39.9525839,
+					Longitude: -75.1652215,
 				},
 			},
 		}, nil)
-		action := NewMatchingParticipantsAction(repository)
+		action := NewMatchingParticipantsAction(repository, distanceService)
 
 		participants, err := action.GetMatchingParticipantsForProject(project)
 
 		assert.Nil(t, err)
-		assert.Equal(t, 3, len(participants))
+		assert.Equal(t, 2, len(participants))
 		repository.AssertExpectations(t)
-
 	})
 }
