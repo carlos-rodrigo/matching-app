@@ -2,7 +2,8 @@ package matching
 
 //Project represent a Respondant project
 type Project struct {
-	Cities []City
+	Cities              []City
+	ProfesionalIndustry []string
 }
 
 type City struct {
@@ -24,4 +25,5 @@ type Participant struct {
 	Name             string
 	FormattedAddress string
 	Location         Location
+	Industry         []string
 }

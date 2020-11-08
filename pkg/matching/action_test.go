@@ -19,6 +19,7 @@ func (m *mockParticipantRepostory) GetByFormattedAddress(address string) ([]Part
 
 func TestMatchingProjectWithParticipants(t *testing.T) {
 	distanceService := NewDistanceService()
+	scoreService := NewScoreService()
 	city := "New York, NY, USA"
 	projectWithOneCity := Project{
 		Cities: []City{
@@ -112,7 +113,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	t.Run("Given a Project, When we don't found participants, Then should return an empty list of participants", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
 		repository.On("GetByFormattedAddress", city).Return([]Participant{}, nil)
-		action := NewMatchingParticipantsAction(repository, distanceService)
+		action := NewMatchingParticipantsAction(repository, distanceService, scoreService)
 
 		participants, _ := action.GetMatchingParticipantsForProject(projectWithOneCity)
 
@@ -121,7 +122,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	t.Run("Given a Project, When we found participants that match, then should return a list of matching participants", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
 		repository.On("GetByFormattedAddress", city).Return(newYorkPaticipantsWithLessThan100KmDistance, nil)
-		action := NewMatchingParticipantsAction(repository, distanceService)
+		action := NewMatchingParticipantsAction(repository, distanceService, scoreService)
 
 		participants, _ := action.GetMatchingParticipantsForProject(projectWithOneCity)
 
@@ -137,7 +138,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	t.Run("Given a Project, When can't access to participants, then should return an user friendly error", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
 		repository.On("GetByFormattedAddress", city).Return([]Participant{}, errors.New("Can't access to storage now"))
-		action := NewMatchingParticipantsAction(repository, distanceService)
+		action := NewMatchingParticipantsAction(repository, distanceService, scoreService)
 
 		_, err := action.GetMatchingParticipantsForProject(projectWithOneCity)
 
@@ -149,7 +150,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 		repository := new(mockParticipantRepostory)
 		repository.On("GetByFormattedAddress", "New York, NY, USA").Return(newYorkPaticipantsWithLessThan100KmDistance, nil)
 		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return(phillyParticipantsWithLessThan100KmDistance, nil)
-		action := NewMatchingParticipantsAction(repository, distanceService)
+		action := NewMatchingParticipantsAction(repository, distanceService, scoreService)
 
 		participants, err := action.GetMatchingParticipantsForProject(projectWithTwoCities)
 
@@ -159,17 +160,34 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 
 	})
 
-	t.Run("Given a project with specified cities, when match participants for project, then must filter those farther than 100km", func(t *testing.T) {
-
+	t.Run("Given a Project with a set of cities, When look for participants for the project, Then participants must be located in less than 100km", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
 		repository.On("GetByFormattedAddress", "New York, NY, USA").Return(twoNewYorkPaticipantsOneWithLessThan100KmDistance, nil)
 		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return(phillyParticipantsWithLessThan100KmDistance, nil)
-		action := NewMatchingParticipantsAction(repository, distanceService)
+		action := NewMatchingParticipantsAction(repository, distanceService, scoreService)
 
 		participants, err := action.GetMatchingParticipantsForProject(projectWithTwoCities)
 
 		assert.Nil(t, err)
 		assert.Equal(t, 2, len(participants))
 		repository.AssertExpectations(t)
+
 	})
+
+	t.Run("Given a project with a defined industry and job titles, When participants are found, Then they must be sorted by match score in desendent order", func(t *testing.T) {
+		repository := new(mockParticipantRepostory)
+		repository.On("GetByFormattedAddress", "New York, NY, USA").Return(newYorkPaticipantsWithLessThan100KmDistance, nil)
+		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return(phillyParticipantsWithLessThan100KmDistance, nil)
+
+		action := NewMatchingParticipantsAction(repository, distanceService, scoreService)
+
+		participants, err := action.GetMatchingParticipantsForProject(projectWithTwoCities)
+
+		assert.Nil(t, err)
+		assert.Equal(t, 3, len(participants))
+		assert.True(t, participants[0].Score >= participants[1].Score)
+		assert.True(t, participants[1].Score >= participants[2].Score)
+		repository.AssertExpectations(t)
+	})
+
 }
