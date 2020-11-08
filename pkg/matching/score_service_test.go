@@ -1,40 +1,16 @@
 package matching
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type ScoreService interface {
-	GetMatchingScore(project Project, participant Participant) float64
-}
-
-type scoreService struct {
-}
-
-func (s *scoreService) GetMatchingScore(project Project, participant Participant) float64 {
-	score := 0.0
-	for _, industry := range participant.Industry {
-		for _, projectIndustry := range project.ProfesionalIndustry {
-			if strings.ToLower(industry) == strings.ToLower(projectIndustry) {
-				score++
-			}
-		}
-	}
-	return score
-}
-
-func NewScoreService() ScoreService {
-	return &scoreService{}
-}
-
 func TestScoreService(t *testing.T) {
 	t.Run("Given a project with a professional industries, When matching score is evaluated, Then must recieve one point for every industry match", func(t *testing.T) {
 		service := NewScoreService()
 		project := Project{
-			ProfesionalIndustry: []string{
+			ProfessionalIndustry: []string{
 				"Banking",
 				"Financial Services",
 				"Government Administration",
@@ -58,5 +34,30 @@ func TestScoreService(t *testing.T) {
 		score := service.GetMatchingScore(project, participant)
 
 		assert.Equal(t, 3.0, score)
+	})
+	t.Run("Given a project with JobTitles, When matching score is evaluated, Then add one point to score if the participant job title is a full match with project expected job titles", func(t *testing.T) {
+		service := NewScoreService()
+		project := Project{
+			ProfessionalJobTitles: []string{
+				"Developer",
+				"Software Engineer",
+				"Software Developer",
+				"Programmer",
+				"Java Developer",
+				"Java/J2EE Developer",
+				"Java Full Stack Developer",
+				"Java Software Engineer",
+				"Java Software Developer",
+				"Application Architect",
+				"Application Developer",
+			},
+		}
+		participant := Participant{
+			JobTitle: "Software Engineer",
+		}
+
+		score := service.GetMatchingScore(project, participant)
+
+		assert.Equal(t, 1.0, score)
 	})
 }
