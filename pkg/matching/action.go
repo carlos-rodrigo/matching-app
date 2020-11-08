@@ -1,6 +1,10 @@
 package matching
 
-import "errors"
+import (
+	"errors"
+	"log"
+	"sync"
+)
 
 //ErrCantGetParticipantsNow is retrived when repository returns an error
 var ErrCantGetParticipantsNow = errors.New("Can't get participants now")
@@ -22,18 +26,49 @@ type action struct {
 }
 
 func (a *action) GetMatchingParticipantsForProject(p Project) ([]MatchingParticipant, error) {
-	participants, err := a.Participants.GetParticipants()
+	wg := sync.WaitGroup{}
+	participantsChan := make(chan Participant)
+	errChan := make(chan error, 1)
+
+	go func() {
+		wg.Wait()
+		close(participantsChan)
+		close(errChan)
+	}()
+
+	for _, city := range p.Cities {
+		wg.Add(1)
+		go a.getParticipantsPerCity(errChan, participantsChan, city, &wg)
+	}
+
+	matchingParticipants := []MatchingParticipant{}
+
+	for p := range participantsChan {
+		matchingParticipants = append(matchingParticipants, MatchingParticipant{
+			Name: p.Name,
+		})
+	}
+
+	err := <-errChan
 	if err != nil {
 		return []MatchingParticipant{}, ErrCantGetParticipantsNow
 	}
-	matchingParticipants := make([]MatchingParticipant, len(participants))
-	for i, v := range participants {
-		matchingParticipants[i] = MatchingParticipant{
-			Name: v.Name,
-		}
-	}
 
 	return matchingParticipants, nil
+}
+
+func (a *action) getParticipantsPerCity(errors chan error, participants chan Participant, city City, wg *sync.WaitGroup) {
+	defer wg.Done()
+	cityParticipants, err := a.Participants.GetByFormattedAddress(city.FormattedAddress)
+	if err != nil {
+		log.Println(err)
+		errors <- err
+		return
+	}
+	for _, p := range cityParticipants {
+		participants <- p
+	}
+	return
 }
 
 func NewMatchingParticipantsAction(repository ParticipantRepository) Action {

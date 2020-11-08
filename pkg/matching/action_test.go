@@ -5,13 +5,39 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
+type mockParticipantRepostory struct {
+	mock.Mock
+}
+
+func (m *mockParticipantRepostory) GetByFormattedAddress(address string) ([]Participant, error) {
+	args := m.Called(address)
+	return args.Get(0).([]Participant), args.Error(1)
+}
+
 func TestMatchingProjectWithParticipants(t *testing.T) {
+	city := "New York, NY, USA"
+	project := Project{
+		Cities: []City{
+			City{
+				ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
+				City:             "New York",
+				State:            "NY",
+				Country:          "US",
+				FormattedAddress: city,
+				Location: Location{
+					Latitude:  40.7127753,
+					Longitude: -74.0059728,
+				},
+			},
+		},
+	}
+
 	t.Run("Given a Project, When we don't found participants, Then should return an empty list of participants", func(t *testing.T) {
-		project := Project{}
 		repository := new(mockParticipantRepostory)
-		repository.On("GetParticipants").Return([]Participant{}, nil)
+		repository.On("GetByFormattedAddress", city).Return([]Participant{}, nil)
 		action := NewMatchingParticipantsAction(repository)
 
 		participants, _ := action.GetMatchingParticipantsForProject(project)
@@ -19,9 +45,8 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 		assert.Equal(t, 0, len(participants))
 	})
 	t.Run("Given a Project, When we found participants that match, then should return a list of matching participants", func(t *testing.T) {
-		project := Project{}
 		repository := new(mockParticipantRepostory)
-		repository.On("GetParticipants").Return([]Participant{
+		repository.On("GetByFormattedAddress", city).Return([]Participant{
 			Participant{
 				Name: "Jefferson",
 			},
@@ -40,17 +65,82 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 			assert.NotEqual(t, nil, participant.Distance)
 			assert.NotEqual(t, nil, participant.Score)
 		}
+		repository.AssertExpectations(t)
 	})
 	t.Run("Given a Project, When can't access to participants, then should return an user friendly error", func(t *testing.T) {
-		project := Project{}
 		repository := new(mockParticipantRepostory)
-		repository.On("GetParticipants").Return([]Participant{}, errors.New("Can't access to storage now"))
+		repository.On("GetByFormattedAddress", city).Return([]Participant{}, errors.New("Can't access to storage now"))
 		action := NewMatchingParticipantsAction(repository)
 
 		_, err := action.GetMatchingParticipantsForProject(project)
 
 		assert.NotNil(t, err)
 		assert.Equal(t, "Can't get participants now", err.Error())
+		repository.AssertExpectations(t)
 	})
+	t.Run("Given a Project with a set of cities, When look for participants for the project, Then participants must be located in one of the project cities", func(t *testing.T) {
+		project := Project{
+			Cities: []City{
+				City{
+					ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
+					City:             "New York",
+					State:            "NY",
+					Country:          "US",
+					FormattedAddress: "New York, NY, USA",
+					Location: Location{
+						Latitude:  40.7127753,
+						Longitude: -74.0059728,
+					},
+				},
+				City{
+					ID:               "ChIJ60u11Ni3xokRwVg-jNgU9Yk",
+					City:             "Philadelphia",
+					State:            "PA",
+					Country:          "US",
+					FormattedAddress: "Philadelphia, PA, USA",
+					Location: Location{
+						Latitude:  39.9525839,
+						Longitude: -75.1652215,
+					},
+				},
+			},
+		}
+		repository := new(mockParticipantRepostory)
+		repository.On("GetByFormattedAddress", "New York, NY, USA").Return([]Participant{
+			Participant{
+				Name:             "Jefferson",
+				FormattedAddress: "New York, NY, USA",
+				Location: Location{
+					Latitude:  40.7127753,
+					Longitude: -74.0059728,
+				},
+			},
+			Participant{
+				Name:             "Jillian",
+				FormattedAddress: "New York, NY, USA",
+				Location: Location{
+					Latitude:  40.6781784,
+					Longitude: -73.9441579,
+				},
+			},
+		}, nil)
+		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return([]Participant{
+			Participant{
+				Name:             "Matthew",
+				FormattedAddress: "Philadelphia, PA, USA",
+				Location: Location{
+					Latitude:  40.7127753,
+					Longitude: -74.0059728,
+				},
+			},
+		}, nil)
+		action := NewMatchingParticipantsAction(repository)
 
+		participants, err := action.GetMatchingParticipantsForProject(project)
+
+		assert.Nil(t, err)
+		assert.Equal(t, 3, len(participants))
+		repository.AssertExpectations(t)
+
+	})
 }
