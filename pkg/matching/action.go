@@ -14,8 +14,8 @@ var ErrCantGetParticipantsNow = errors.New("Can't get participants now")
 //MatchingParticipant represents a Participant that match with a Project
 type MatchingParticipant struct {
 	Name     string
-	Distance float32
-	Score    float32
+	Distance float64
+	Score    float64
 }
 
 //Action represents the action of get Participants that matches with a Project
