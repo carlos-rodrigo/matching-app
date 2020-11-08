@@ -60,4 +60,31 @@ func TestScoreService(t *testing.T) {
 
 		assert.Equal(t, 1.0, score)
 	})
+
+	t.Run("Given a project with JobTitles, When matching score is evaluated, Then add half point to score if the participant job title is a full match with project expected job titles and contains a high seniority indicatior", func(t *testing.T) {
+		service := NewScoreService()
+		project := Project{
+			ProfessionalJobTitles: []string{
+				"Developer",
+				"Software Engineer",
+				"Software Developer",
+				"Programmer",
+				"Java Developer",
+				"Java/J2EE Developer",
+				"Java Full Stack Developer",
+				"Java Software Engineer",
+				"Java Software Developer",
+				"Application Architect",
+				"Application Developer",
+			},
+		}
+		participant := Participant{
+			JobTitle: "Senior Software Engineer",
+		}
+
+		score := service.GetMatchingScore(project, participant)
+
+		assert.Equal(t, 1.5, score)
+	})
+
 }

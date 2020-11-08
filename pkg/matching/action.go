@@ -13,9 +13,16 @@ var ErrCantGetParticipantsNow = errors.New("Can't get participants now")
 
 //MatchingParticipant represents a Participant that match with a Project
 type MatchingParticipant struct {
-	Name     string
-	Distance float64
-	Score    float64
+	Name       string
+	Distance   float64
+	Score      float64
+	LocationID string
+}
+
+type DistanceParticipant struct {
+	Participant Participant
+	Distance    float64
+	LocationID  string
 }
 
 //Action represents the action of get Participants that matches with a Project
@@ -29,9 +36,9 @@ type action struct {
 	Score        ScoreService
 }
 
-func (a *action) GetMatchingParticipantsForProject(p Project) ([]MatchingParticipant, error) {
+func (a *action) GetMatchingParticipantsForProject(project Project) ([]MatchingParticipant, error) {
 	wg := sync.WaitGroup{}
-	participantsChan := make(chan Participant)
+	participantsChan := make(chan DistanceParticipant)
 	errChan := make(chan error, 1)
 
 	go func() {
@@ -40,16 +47,19 @@ func (a *action) GetMatchingParticipantsForProject(p Project) ([]MatchingPartici
 		close(errChan)
 	}()
 
-	for _, city := range p.Cities {
+	for _, city := range project.Cities {
 		wg.Add(1)
 		go a.getParticipantsPerCity(errChan, participantsChan, city, &wg)
 	}
 
 	matchingParticipants := []MatchingParticipant{}
 
-	for p := range participantsChan {
+	for distanceParticipant := range participantsChan {
 		matchingParticipants = append(matchingParticipants, MatchingParticipant{
-			Name: p.Name,
+			Name:       distanceParticipant.Participant.Name,
+			Score:      a.Score.GetMatchingScore(project, distanceParticipant.Participant),
+			Distance:   distanceParticipant.Distance,
+			LocationID: distanceParticipant.LocationID,
 		})
 	}
 
@@ -61,7 +71,7 @@ func (a *action) GetMatchingParticipantsForProject(p Project) ([]MatchingPartici
 	return matchingParticipants, nil
 }
 
-func (a *action) getParticipantsPerCity(errors chan error, participants chan Participant, city City, wg *sync.WaitGroup) {
+func (a *action) getParticipantsPerCity(errors chan error, participants chan DistanceParticipant, city City, wg *sync.WaitGroup) {
 	defer wg.Done()
 	cityParticipants, err := a.Participants.GetByFormattedAddress(city.FormattedAddress)
 	if err != nil {
@@ -70,13 +80,19 @@ func (a *action) getParticipantsPerCity(errors chan error, participants chan Par
 		return
 	}
 	for _, p := range cityParticipants {
-		if a.Distance.GetDistanceBetweenLocations(p.Location, city.Location) <= maxDistance {
-			participants <- p
+		distance := a.Distance.GetDistanceBetweenLocations(p.Location, city.Location)
+		if distance <= maxDistance {
+			participants <- DistanceParticipant{
+				Participant: p,
+				Distance:    distance,
+				LocationID:  city.ID,
+			}
 		}
 	}
 	return
 }
 
+//NewMatchingParticipantsAction returns an Action to get the matching participants from a project
 func NewMatchingParticipantsAction(repository ParticipantRepository, distance DistanceService, score ScoreService) Action {
 	return &action{
 		Participants: repository,

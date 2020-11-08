@@ -2,6 +2,18 @@ package matching
 
 import "strings"
 
+var highSeniorityIndicators = []string{
+	"Sr ",
+	"Sr. ",
+	"Senior ",
+	"Expert ",
+	"Principal ",
+	"Staff ",
+	"Specialist ",
+	"Head ",
+}
+
+//ScoreService manage all relative calculation to matching score
 type ScoreService interface {
 	GetMatchingScore(project Project, participant Participant) float64
 }
@@ -10,6 +22,7 @@ type scoreService struct {
 }
 
 func (s *scoreService) GetMatchingScore(project Project, participant Participant) float64 {
+
 	score := evalIndustriesScore(participant.Industry, project.ProfessionalIndustry)
 	score += evalJobTitleScore(participant.JobTitle, project.ProfessionalJobTitles)
 
@@ -32,16 +45,26 @@ func evalIndustriesScore(participantIndustries []string, projectIndustries []str
 
 func evalJobTitleScore(participantJobTitle string, projectExpectedJobsTitles []string) float64 {
 	score := 0.0
+	loweredParticipantJobTitle := strings.ToLower(participantJobTitle)
 	for _, jobTitle := range projectExpectedJobsTitles {
-		if strings.ToLower(jobTitle) == strings.ToLower(participantJobTitle) {
+		loweredJobTitle := strings.ToLower(jobTitle)
+		if loweredJobTitle == loweredParticipantJobTitle {
 			score++
+		} else {
+			if strings.Contains(loweredParticipantJobTitle, loweredJobTitle) {
+				score++
+				for _, seniority := range highSeniorityIndicators {
+					if strings.Contains(loweredParticipantJobTitle, strings.ToLower(seniority)) {
+						score += 0.5
+					}
+				}
+			}
 		}
 	}
-
 	return score
-
 }
 
+//NewScoreService returns a new ScoreService
 func NewScoreService() ScoreService {
 	return &scoreService{}
 }
