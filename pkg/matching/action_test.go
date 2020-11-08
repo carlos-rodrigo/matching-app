@@ -35,6 +35,52 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 			},
 		},
 	}
+	newYorkPaticipantsWithLessThan100KmDistance := []Participant{
+		Participant{
+			Name:             "Jefferson",
+			FormattedAddress: "New York, NY, USA",
+			Location: Location{
+				Latitude:  40.7127753,
+				Longitude: -74.0059728,
+			},
+		},
+		Participant{
+			Name:             "Jillian",
+			FormattedAddress: "New York, NY, USA",
+			Location: Location{
+				Latitude:  40.6781784,
+				Longitude: -73.9441579,
+			},
+		},
+	}
+	phillyParticipantsWithLessThan100KmDistance := []Participant{
+		Participant{
+			Name:             "Matthew",
+			FormattedAddress: "Philadelphia, PA, USA",
+			Location: Location{
+				Latitude:  39.9525839,
+				Longitude: -75.1652215,
+			},
+		},
+	}
+	twoNewYorkPaticipantsOneWithLessThan100KmDistance := []Participant{
+		Participant{
+			Name:             "Jefferson",
+			FormattedAddress: "New York, NY, USA",
+			Location: Location{
+				Latitude:  39.9525839,
+				Longitude: -75.1652215,
+			},
+		},
+		Participant{
+			Name:             "Jillian",
+			FormattedAddress: "New York, NY, USA",
+			Location: Location{
+				Latitude:  40.6781784,
+				Longitude: -73.9441579,
+			},
+		},
+	}
 
 	t.Run("Given a Project, When we don't found participants, Then should return an empty list of participants", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
@@ -47,14 +93,7 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	})
 	t.Run("Given a Project, When we found participants that match, then should return a list of matching participants", func(t *testing.T) {
 		repository := new(mockParticipantRepostory)
-		repository.On("GetByFormattedAddress", city).Return([]Participant{
-			Participant{
-				Name: "Jefferson",
-			},
-			Participant{
-				Name: "Jillian",
-			},
-		}, nil)
+		repository.On("GetByFormattedAddress", city).Return(newYorkPaticipantsWithLessThan100KmDistance, nil)
 		action := NewMatchingParticipantsAction(repository, distanceService)
 
 		participants, _ := action.GetMatchingParticipantsForProject(project)
@@ -107,22 +146,8 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 			},
 		}
 		repository := new(mockParticipantRepostory)
-		repository.On("GetByFormattedAddress", "New York, NY, USA").Return([]Participant{
-			Participant{
-				Name:             "Jefferson",
-				FormattedAddress: "New York, NY, USA",
-			},
-			Participant{
-				Name:             "Jillian",
-				FormattedAddress: "New York, NY, USA",
-			},
-		}, nil)
-		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return([]Participant{
-			Participant{
-				Name:             "Matthew",
-				FormattedAddress: "Philadelphia, PA, USA",
-			},
-		}, nil)
+		repository.On("GetByFormattedAddress", "New York, NY, USA").Return(newYorkPaticipantsWithLessThan100KmDistance, nil)
+		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return(phillyParticipantsWithLessThan100KmDistance, nil)
 		action := NewMatchingParticipantsAction(repository, distanceService)
 
 		participants, err := action.GetMatchingParticipantsForProject(project)
@@ -161,34 +186,8 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 			},
 		}
 		repository := new(mockParticipantRepostory)
-		repository.On("GetByFormattedAddress", "New York, NY, USA").Return([]Participant{
-			Participant{
-				Name:             "Jefferson",
-				FormattedAddress: "New York, NY, USA",
-				Location: Location{
-					Latitude:  40.247201,
-					Longitude: -74.796316,
-				},
-			},
-			Participant{
-				Name:             "Jillian",
-				FormattedAddress: "New York, NY, USA",
-				Location: Location{
-					Latitude:  40.6781784,
-					Longitude: -73.9441579,
-				},
-			},
-		}, nil)
-		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return([]Participant{
-			Participant{
-				Name:             "Matthew",
-				FormattedAddress: "Philadelphia, PA, USA",
-				Location: Location{
-					Latitude:  39.9525839,
-					Longitude: -75.1652215,
-				},
-			},
-		}, nil)
+		repository.On("GetByFormattedAddress", "New York, NY, USA").Return(twoNewYorkPaticipantsOneWithLessThan100KmDistance, nil)
+		repository.On("GetByFormattedAddress", "Philadelphia, PA, USA").Return(phillyParticipantsWithLessThan100KmDistance, nil)
 		action := NewMatchingParticipantsAction(repository, distanceService)
 
 		participants, err := action.GetMatchingParticipantsForProject(project)
