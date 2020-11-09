@@ -3,6 +3,7 @@ package matching
 //Project represent a Respondant project
 type Project struct {
 	Cities                []City
+	Genders               string
 	ProfessionalIndustry  []string
 	ProfessionalJobTitles []string
 }
@@ -24,6 +25,7 @@ type Location struct {
 //Participant represent a Respondent or project participant
 type Participant struct {
 	Name             string
+	Gender           string
 	FormattedAddress string
 	Location         Location
 	JobTitle         string

@@ -37,6 +37,30 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 		},
 	}
 	projectWithTwoCities := Project{
+		ProfessionalIndustry: []string{
+			"Banking",
+			"Financial Services",
+			"Government Administration",
+			"Insurance",
+			"Retail",
+			"Supermarkets",
+			"Automotive",
+			"Computer Software",
+		},
+		ProfessionalJobTitles: []string{
+			"Developer",
+			"Software Engineer",
+			"Software Developer",
+			"Programmer",
+			"Java Developer",
+			"Java/J2EE Developer",
+			"Java Full Stack Developer",
+			"Java Software Engineer",
+			"Java Software Developer",
+			"Application Architect",
+			"Application Developer",
+		},
+
 		Cities: []City{
 			City{
 				ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
@@ -66,24 +90,29 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	newYorkPaticipantsWithLessThan100KmDistance := []Participant{
 		Participant{
 			Name:             "Jefferson",
+			Gender:           "male",
 			FormattedAddress: "New York, NY, USA",
 			Location: Location{
 				Latitude:  40.7127753,
 				Longitude: -74.0059728,
 			},
+			JobTitle: "Software Engineer",
 		},
 		Participant{
 			Name:             "Jillian",
+			Gender:           "famele",
 			FormattedAddress: "New York, NY, USA",
 			Location: Location{
 				Latitude:  40.6781784,
 				Longitude: -73.9441579,
 			},
+			JobTitle: "Senior Software Engineer",
 		},
 	}
 	phillyParticipantsWithLessThan100KmDistance := []Participant{
 		Participant{
 			Name:             "Matthew",
+			JobTitle:         "Senior Software Engineer",
 			FormattedAddress: "Philadelphia, PA, USA",
 			Location: Location{
 				Latitude:  39.9525839,
@@ -185,9 +214,8 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, 3, len(participants))
-		assert.True(t, participants[0].Score >= participants[1].Score)
-		assert.True(t, participants[1].Score >= participants[2].Score)
+		assert.True(t, participants[0].Score >= participants[1].Score, "%+v p1 %+v p2", participants[0], participants[2])
+		assert.True(t, participants[1].Score >= participants[2].Score, "%+v p1 %+v p2", participants[1], participants[2])
 		repository.AssertExpectations(t)
 	})
-
 }

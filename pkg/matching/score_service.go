@@ -22,7 +22,6 @@ type scoreService struct {
 }
 
 func (s *scoreService) GetMatchingScore(project Project, participant Participant) float64 {
-
 	score := evalIndustriesScore(participant.Industry, project.ProfessionalIndustry)
 	score += evalJobTitleScore(participant.JobTitle, project.ProfessionalJobTitles)
 

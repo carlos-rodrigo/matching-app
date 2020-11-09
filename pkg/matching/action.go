@@ -3,6 +3,7 @@ package matching
 import (
 	"errors"
 	"log"
+	"sort"
 	"sync"
 )
 
@@ -19,6 +20,21 @@ type MatchingParticipant struct {
 	LocationID string
 }
 
+type byScore []MatchingParticipant
+
+func (s byScore) Len() int {
+	return len(s)
+}
+
+func (s byScore) Less(i, j int) bool {
+	return s[j].Score < s[i].Score
+}
+
+func (s byScore) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+//DistanceParticipant represents a tuple Participant and Distance to a location
 type DistanceParticipant struct {
 	Participant Participant
 	Distance    float64
@@ -67,6 +83,8 @@ func (a *action) GetMatchingParticipantsForProject(project Project) ([]MatchingP
 	if err != nil {
 		return []MatchingParticipant{}, ErrCantGetParticipantsNow
 	}
+
+	sort.Sort(byScore(matchingParticipants))
 
 	return matchingParticipants, nil
 }
