@@ -8,7 +8,15 @@ This was a really fun project! The first time I read it, my first impression was
 I like to share the main challenges I face and what decisions I made to achieve them.
 * **Participants data in CSV file:** As I mentioned before, I detect that not all participants in the file had the same format for **city** field. That makes me difficult to filter users for locations in the project. The way I solve this is by calling Google Geocoding API for each participant when I load the data, using latitude and longitude, to obtain a normalized **formatedAddress**. This also allows me to detect one row (390) with inconsistent information `40.8516701	-93.2599318`.
 * **Scoring Participants:** My implementation is simple, one point for every matching industry + one point if the job title is a full match with the professional titles specified in the project + 0.5 points if I detect an expertise indicator in the job title. But I'm not sure about false positives.
-* **Calculating Distances:** I implement the Haversine formula as is suggested in the project description. But at the moment of testing against the `project.json` I found a lot of zero distances as result. At the moment of code, I have tested this case but makes me doubt it.
+* **Calculating Distances:** I implement the Haversine formula as is suggested in the project description. But at the moment of testing against the `project.json` I found a lot of zero distances as result. At the moment of code, I have tested this case but makes me doubt it. I have 495 results over 500 cases where distance is less than 100km but a strange number of cases with 0 distance.
+
+## Improvements Opportunities
+This is a spoiler alert of what I think I could improve. 
+* **Dockerization:** Create the docker image for the project that starts a web server to test the application.
+* **Gender filter:** I couldn’t take the time to add a gender filter for participants.
+* **Hardcoded Maps Key:** The google maps API key is hardcoded in code. This must be an environment variable.
+* **CI/CD pipeline:** Add the pipeline definition for the project.
+* **CSV loading time:** Takes too much, around 30 seconds. I believe I could improve this using `go functions`.
 
 ## Language
 I use Golang to develop the project. I have been using Golang for the last 8 months and, as the challenge description says, is the language I feel strongest now.
@@ -68,7 +76,7 @@ Now we must see the following on the console
 2020/11/09 11:40:04 FormattedAddress can't be obtained "Not found address for location"
 2020/11/09 11:40:14 Participants loaded....
 ```
-And to test it we can just to made this call that contains the content of `project.json` file
+And to test it we can just make this call that contains the content of `project.json` file
 
 ```
 curl --location --request GET 'http://localhost:8080/matching/' \
@@ -216,5 +224,3 @@ curl --location --request GET 'http://localhost:8080/matching/' \
     ]
 }'
 ```
-
-
