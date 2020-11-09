@@ -39,7 +39,7 @@ type ResponseBody struct {
 }
 
 func matchingParticipants() Handler {
-	repo := storage.NewCsvParticipantsRepository("../../respondents_data_test.csv")
+	repo := storage.NewCsvParticipantsRepository("./respondents_data_test.csv")
 	distance := matching.NewDistanceService()
 	score := matching.NewScoreService()
 	action := matching.NewMatchingParticipantsAction(repo, distance, score)
