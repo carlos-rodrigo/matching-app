@@ -42,7 +42,7 @@ func (h *matchingHandler) Perform(w http.ResponseWriter, r *http.Request, _ http
 		return
 	}
 
-	log.Println("Results count: %q", len(participants))
+	log.Println("Results count: ", len(participants))
 	writeResponse(w, http.StatusOK, "Successful Login!", participants)
 }
 
