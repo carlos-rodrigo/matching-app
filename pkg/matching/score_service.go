@@ -49,15 +49,11 @@ func evalJobTitleScore(participantJobTitle string, projectExpectedJobsTitles []s
 	loweredParticipantJobTitle := strings.ToLower(participantJobTitle)
 	for _, jobTitle := range projectExpectedJobsTitles {
 		loweredJobTitle := strings.ToLower(jobTitle)
-		if loweredJobTitle == loweredParticipantJobTitle {
+		if strings.Contains(loweredParticipantJobTitle, loweredJobTitle) {
 			score++
-		} else {
-			if strings.Contains(loweredParticipantJobTitle, loweredJobTitle) {
-				score++
-				for _, seniority := range highSeniorityIndicators {
-					if strings.Contains(loweredParticipantJobTitle, strings.ToLower(seniority)) {
-						score += 0.5
-					}
+			for _, seniority := range highSeniorityIndicators {
+				if strings.Contains(loweredParticipantJobTitle, strings.ToLower(seniority)) {
+					score += 0.5
 				}
 			}
 		}

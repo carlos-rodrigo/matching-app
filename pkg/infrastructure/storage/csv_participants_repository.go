@@ -15,10 +15,12 @@ import (
 
 const mapsKey = "AIzaSyA5QdtBhRRhPbJAx-oXUffbpQy3ARuSRt8" //TODO: Change this hardcoded key. Make it an environment variable
 
+//CsvParticipantRepository represents a ParticipantRepository implementation for CSV files
 type CsvParticipantRepository struct {
 	Participants []matching.Participant
 }
 
+//GetByFormattedAddress returns a filtered set of Participants using an address as criteria
 func (r *CsvParticipantRepository) GetByFormattedAddress(address string) ([]matching.Participant, error) {
 	filteredParticipants := []matching.Participant{}
 	for _, participant := range r.Participants {
@@ -30,6 +32,7 @@ func (r *CsvParticipantRepository) GetByFormattedAddress(address string) ([]matc
 	return filteredParticipants, nil
 }
 
+//NewCsvParticipantsRepository returns a new CsvParticipantRepository fullfiled with participants
 func NewCsvParticipantsRepository(csvPath string) *CsvParticipantRepository {
 	log.Println("Loading Participants Storage...")
 	participants := readCsvAndLoadParticipants(csvPath)
