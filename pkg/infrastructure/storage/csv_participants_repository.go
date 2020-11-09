@@ -8,12 +8,25 @@ import (
 	"strconv"
 	"strings"
 
-	matching "github.com/carlos-rodrigo/matching-app/pkg/matching/model"
+	"github.com/carlos-rodrigo/matching-app/pkg/matching"
 	"googlemaps.github.io/maps"
 )
 
+const mapsKey = "AIzaSyA5QdtBhRRhPbJAx-oXUffbpQy3ARuSRt8" //TODO: Change this hardcoded key. Make it an environment variable
+
 type CsvParticipantRepository struct {
 	Participants []matching.Participant
+}
+
+func (r *CsvParticipantRepository) GetByFormattedAddress(address string) ([]matching.Participant, error) {
+	filteredParticipants := []matching.Participant{}
+	for _, participant := range r.Participants {
+		if strings.ToLower(address) == strings.ToLower(participant.FormattedAddress) {
+			filteredParticipants = append(filteredParticipants, participant)
+		}
+	}
+
+	return filteredParticipants, nil
 }
 
 func NewCsvParticipantsRepository(csvPath string) CsvParticipantRepository {
@@ -73,14 +86,15 @@ func readCsvAndLoadParticipants(csvPath string) []matching.Participant {
 }
 
 func getFormattedAddressForLocation(latitude, longitude float64) (string, error) {
-	c, err := maps.NewClient(maps.WithAPIKey("AIzaSyA5QdtBhRRhPbJAx-oXUffbpQy3ARuSRt8")) //TODO: Change this hardcoded key. Make it an environment variable
+	c, err := maps.NewClient(maps.WithAPIKey(mapsKey))
 	if err != nil {
 		log.Fatalf("fatal error: %s", err)
 		return "", err
 	}
 
 	r := &maps.GeocodingRequest{
-		LatLng: &maps.LatLng{Lat: latitude, Lng: longitude},
+		LatLng:     &maps.LatLng{Lat: latitude, Lng: longitude},
+		ResultType: []string{"locality"},
 	}
 
 	resp, errReverseGeocode := c.ReverseGeocode(context.Background(), r)
