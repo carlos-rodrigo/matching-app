@@ -14,10 +14,10 @@ var ErrCantGetParticipantsNow = errors.New("Can't get participants now")
 
 //MatchingParticipant represents a Participant that match with a Project
 type MatchingParticipant struct {
-	Name       string
-	Distance   float64
-	Score      float64
-	LocationID string
+	Name       string  `json:"name"`
+	Distance   float64 `json:"distance"`
+	Score      float64 `json:"score"`
+	LocationID string  `json:"location_id"`
 }
 
 type byScore []MatchingParticipant
@@ -91,19 +91,19 @@ func (a *action) GetMatchingParticipantsForProject(project Project) ([]MatchingP
 
 func (a *action) getParticipantsPerCity(errors chan error, participants chan DistanceParticipant, city City, wg *sync.WaitGroup) {
 	defer wg.Done()
-	cityParticipants, err := a.Participants.GetByFormattedAddress(city.FormattedAddress)
+	cityParticipants, err := a.Participants.GetByFormattedAddress(city.CityLocation.FormattedAddress)
 	if err != nil {
 		log.Println(err)
 		errors <- err
 		return
 	}
 	for _, p := range cityParticipants {
-		distance := a.Distance.GetDistanceBetweenLocations(p.Location, city.Location)
+		distance := a.Distance.GetDistanceBetweenLocations(p.Location, city.CityLocation.Location)
 		if distance <= maxDistance {
 			participants <- DistanceParticipant{
 				Participant: p,
 				Distance:    distance,
-				LocationID:  city.ID,
+				LocationID:  city.CityLocation.ID,
 			}
 		}
 	}

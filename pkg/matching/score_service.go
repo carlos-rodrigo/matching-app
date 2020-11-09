@@ -1,6 +1,8 @@
 package matching
 
-import "strings"
+import (
+	"strings"
+)
 
 var highSeniorityIndicators = []string{
 	"Sr ",

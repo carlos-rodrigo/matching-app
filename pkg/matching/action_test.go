@@ -24,14 +24,16 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 	projectWithOneCity := Project{
 		Cities: []City{
 			City{
-				ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
-				City:             "New York",
-				State:            "NY",
-				Country:          "US",
-				FormattedAddress: city,
-				Location: Location{
-					Latitude:  40.7127753,
-					Longitude: -74.0059728,
+				CityLocation: CityLocation{
+					ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
+					City:             "New York",
+					State:            "NY",
+					Country:          "US",
+					FormattedAddress: city,
+					Location: Location{
+						Latitude:  40.7127753,
+						Longitude: -74.0059728,
+					},
 				},
 			},
 		},
@@ -63,25 +65,29 @@ func TestMatchingProjectWithParticipants(t *testing.T) {
 
 		Cities: []City{
 			City{
-				ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
-				City:             "New York",
-				State:            "NY",
-				Country:          "US",
-				FormattedAddress: "New York, NY, USA",
-				Location: Location{
-					Latitude:  40.7127753,
-					Longitude: -74.0059728,
+				CityLocation: CityLocation{
+					ID:               "ChIJOwg_06VPwokRYv534QaPC8g",
+					City:             "New York",
+					State:            "NY",
+					Country:          "US",
+					FormattedAddress: "New York, NY, USA",
+					Location: Location{
+						Latitude:  40.7127753,
+						Longitude: -74.0059728,
+					},
 				},
 			},
 			City{
-				ID:               "ChIJ60u11Ni3xokRwVg-jNgU9Yk",
-				City:             "Philadelphia",
-				State:            "PA",
-				Country:          "US",
-				FormattedAddress: "Philadelphia, PA, USA",
-				Location: Location{
-					Latitude:  39.9525839,
-					Longitude: -75.1652215,
+				CityLocation: CityLocation{
+					ID:               "ChIJ60u11Ni3xokRwVg-jNgU9Yk",
+					City:             "Philadelphia",
+					State:            "PA",
+					Country:          "US",
+					FormattedAddress: "Philadelphia, PA, USA",
+					Location: Location{
+						Latitude:  39.9525839,
+						Longitude: -75.1652215,
+					},
 				},
 			},
 		},

@@ -17,6 +17,6 @@ func TestCsvParticipantsRepository(t *testing.T) {
 		participants, err := repository.GetByFormattedAddress("New York, NY, USA")
 
 		assert.Nil(t, err)
-		assert.NotEqual(t, 50, len(participants))
+		assert.NotEqual(t, 23, len(participants))
 	})
 }

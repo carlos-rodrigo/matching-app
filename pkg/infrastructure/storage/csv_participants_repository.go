@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"encoding/csv"
+	"errors"
 	"log"
 	"os"
 	"strconv"
@@ -29,9 +30,10 @@ func (r *CsvParticipantRepository) GetByFormattedAddress(address string) ([]matc
 	return filteredParticipants, nil
 }
 
-func NewCsvParticipantsRepository(csvPath string) CsvParticipantRepository {
+func NewCsvParticipantsRepository(csvPath string) *CsvParticipantRepository {
+	log.Println("Loading Participants Storage...")
 	participants := readCsvAndLoadParticipants(csvPath)
-	return CsvParticipantRepository{
+	return &CsvParticipantRepository{
 		Participants: participants,
 	}
 }
@@ -67,21 +69,23 @@ func readCsvAndLoadParticipants(csvPath string) []matching.Participant {
 
 		formattedAddress, errFormattedAddress := getFormattedAddressForLocation(latitude, longitude)
 		if errFormattedAddress != nil {
-			log.Fatalf("FormattedAddress can't be obtained %q", errFormattedAddress)
+			log.Printf("FormattedAddress can't be obtained %q", errFormattedAddress)
+		} else {
+			participants = append(participants, matching.Participant{
+				Name:             line[0],
+				Gender:           line[1],
+				JobTitle:         line[2],
+				Industry:         strings.Split(line[3], ","),
+				FormattedAddress: formattedAddress,
+				Location: matching.Location{
+					Latitude:  latitude,
+					Longitude: longitude,
+				},
+			})
 		}
-
-		participants = append(participants, matching.Participant{
-			Name:             line[0],
-			Gender:           line[1],
-			JobTitle:         line[2],
-			Industry:         strings.Split(line[3], ","),
-			FormattedAddress: formattedAddress,
-			Location: matching.Location{
-				Latitude:  latitude,
-				Longitude: longitude,
-			},
-		})
 	}
+
+	log.Println("Participants loaded....")
 	return participants
 }
 
@@ -102,6 +106,10 @@ func getFormattedAddressForLocation(latitude, longitude float64) (string, error)
 	if errReverseGeocode != nil {
 		log.Fatalf("error retriving formattedAddress %q", errReverseGeocode)
 		return "", errReverseGeocode
+	}
+
+	if len(resp) == 0 {
+		return "", errors.New("Not found address for location")
 	}
 
 	return resp[0].FormattedAddress, nil
